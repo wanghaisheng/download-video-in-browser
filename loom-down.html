@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+  <input type="text" id="urlInput" />
+  
+  <button id="submitBtn">Download</button>
+
+
+
+  <form method="POST" action="http://localhost:8080/download-video">
+    <label>Enter Video URL:</label>
+    <input type="text" name="video_url">
+    
+    <button type="submit">Download</button>
+  </form>
+  <script>
+// Fetch Loom download URL
+const fetchLoomDownloadUrl = async (id) => {
+  try {
+    const response = await fetch(`https://www.loom.com/api/campaigns/sessions/${id}/transcoded-url`);
+    const data = await response.json();
+    return { success: true, message: 'Fetched data', data: data.url };
+  } catch (error) {
+    return { success: false, message: 'Error fetching data' }; 
+  }
+};
+
+// Download video 
+const downloadLoomVideo = (url, filename) => {
+  fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    });
+};
+
+// Main function
+const main = async (videoUrl) => {
+  const id = videoUrl.split('/').pop().split("?").shift();
+  
+  const response = await fetchLoomDownloadUrl(id);
+  
+  if(response.success) {
+    const filename = `${id}.mp4`;
+    downloadLoomVideo(response.data, filename);
+    return {success: true}; 
+  }
+  
+  return response;
+};
+
+// Submit handler
+document.getElementById('submitBtn').addEventListener('click', () => {
+
+  const url = document.getElementById('urlInput').value;
+  
+  main(url)
+    .then(res => {
+      if(!res.success) {
+        alert(res.message);  
+      }
+    });
+
+});
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+name: download m3u8 video
+
+'on':
+  workflow_dispatch:
+    inputs:
+      URL:
+        description: YouTube Channel URL
+        type: enviroment
+        required: true
+      downloadVideo:
+        description: if download video file
+        type: boolean
+        required: true
+      downloadSubtitles:
+        description: if download video subtitles
+        type: boolean
+        required: true
+      downloadComments:
+        description: if download video comments
+        type: boolean
+        required: true
+      downloadVideoHeight:
+        description: best or low
+        type: choice
+        required: true
+        options:
+          - 480
+          - 720
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+      - run: npm ci
+      - run: npm run build --if-present
+      - name: run demo
+        run: |
+          python  downloadVideos.py 
+        env:
+          URL: '${{ github.event.inputs.URL }}'
+          downloadVideo: '${{ github.event.inputs.downloadVideo }}'
+          downloadVideoHeight: '${{ github.event.inputs.downloadVideoHeight }}'
+          downloadComments: '${{ github.event.inputs.downloadComments }}'
+          downloadSubtitles: '${{ github.event.inputs.downloadSubtitles }}'
+      - name: Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: '${{ secrets.GITHUB_TOKEN }}'
+          automatic_release_tag: '${{ github.run_id }}'
+          prerelease: false
+          title: '${{ github.run_id }}'
+          files: |
+            output/*             
